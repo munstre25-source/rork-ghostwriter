@@ -40,8 +40,8 @@ enum SubscriptionTier: String, Codable, Hashable, CaseIterable, Identifiable, Se
         case .free:       0
         case .creator:    9.99
         case .pro:        19.99
-        case .studio:     39.99
-        case .enterprise: 99.99
+        case .studio:     49.99
+        case .enterprise: 0
         }
     }
 
@@ -50,41 +50,54 @@ enum SubscriptionTier: String, Codable, Hashable, CaseIterable, Identifiable, Se
         switch self {
         case .free:
             [
-                "3 sessions per day",
-                "1 built-in personality",
-                "Basic clip sharing"
+                "1 Live Jam/month",
+                "The Muse personality",
+                "5-minute sessions",
+                "Standard export with watermark",
+                "Ad-supported (light)",
+                "No clip monetization"
             ]
         case .creator:
             [
                 "Unlimited sessions",
-                "All built-in personalities",
-                "HD clip export",
-                "Basic analytics"
+                "5 built-in personalities",
+                "Unlimited Live Jams",
+                "HQ export (no watermark)",
+                "Creator dashboard",
+                "Clip monetization (70% share)",
+                "Weekly creative reports",
+                "Basic personality customization"
             ]
         case .pro:
             [
                 "Everything in Creator",
-                "Custom personality creation",
-                "Advanced AI suggestions",
+                "20 personalities including premium",
+                "Visual custom personality builder",
+                "Advanced analytics (mood + flow)",
                 "Detailed analytics",
-                "Priority support"
+                "Priority support",
+                "Ad-free experience",
+                "Early access features",
+                "Exclusive badges"
             ]
         case .studio:
             [
                 "Everything in Pro",
-                "Live Jam collaboration",
-                "Monetization tools",
-                "Personality marketplace access",
-                "Team management"
+                "Team workspace (up to 5)",
+                "Team personalities",
+                "Team analytics + collab logs",
+                "Admin controls + permissions",
+                "Team billing",
+                "Dedicated support"
             ]
         case .enterprise:
             [
-                "Everything in Studio",
-                "Custom AI model training",
-                "Dedicated account manager",
-                "SLA guarantee",
+                "Unlimited everything",
+                "Dedicated support",
+                "Custom integrations",
+                "White-label options",
                 "API access",
-                "White-label options"
+                "Advanced security + SSO"
             ]
         }
     }

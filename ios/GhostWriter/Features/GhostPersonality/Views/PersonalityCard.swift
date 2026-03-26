@@ -5,6 +5,9 @@ struct PersonalityCard: View {
 
     var personality: GhostPersonality
     var isOwned: Bool
+    var canTry: Bool
+    var trialButtonTitle: String
+    var creatorPayoutText: String?
     var onTry: () -> Void
     var onPurchase: () -> Void
 
@@ -69,6 +72,12 @@ struct PersonalityCard: View {
                 Spacer(minLength: 0)
             }
 
+            if let creatorPayoutText {
+                Text(creatorPayoutText)
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(Color.ghostEmerald.opacity(0.85))
+            }
+
             traitsRow
 
             HStack(spacing: 10) {
@@ -76,12 +85,13 @@ struct PersonalityCard: View {
                     hapticService.lightTap()
                     onTry()
                 } label: {
-                    Label("Try", systemImage: "play.circle")
+                    Label(trialButtonTitle, systemImage: "play.circle")
                         .font(.subheadline.weight(.semibold))
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
                 .tint(.ghostCyan)
+                .disabled(!canTry)
 
                 Button {
                     hapticService.mediumTap()
@@ -197,6 +207,9 @@ struct PersonalityCard: View {
         PersonalityCard(
             personality: GhostPersonality.theMuse(),
             isOwned: false,
+            canTry: true,
+            trialButtonTitle: "Try 1 Session",
+            creatorPayoutText: nil,
             onTry: {},
             onPurchase: {}
         )
@@ -222,6 +235,9 @@ struct PersonalityCard: View {
                 downloads: 1280
             ),
             isOwned: true,
+            canTry: true,
+            trialButtonTitle: "Try 1 Session",
+            creatorPayoutText: "Creator earns $3.49 (70%)",
             onTry: {},
             onPurchase: {}
         )

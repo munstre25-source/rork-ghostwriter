@@ -1,20 +1,17 @@
 import Foundation
 import SwiftUI
+import SwiftData
 
-// MARK: - CreativeSessionViewModel
-
-/// Central ViewModel for the GhostBoard creative canvas.
-///
-/// Manages the active writing session, live text input with debounced AI
-/// suggestion generation, flow-state detection based on typing cadence,
-/// and bidirectional feedback on AI suggestions.
 @Observable
-final class CreativeSessionViewModel {
+final class CreativeSessionViewModel: @unchecked Sendable {
 
     // MARK: - Published State
 
     var sessionText: String = "" {
-        didSet { debounceTextInput() }
+        didSet {
+            guard sessionText != oldValue, !isBatchUpdating else { return }
+            onTextChanged()
+        }
     }
 
     var suggestions: [GhostSuggestion] = []
@@ -23,9 +20,10 @@ final class CreativeSessionViewModel {
     var error: Error?
     var flowScore: Double = 0
     var selectedSessionType: SessionType = .writing
-    var currentPersonalityId: UUID?
+    var selectedPersonality: GhostPersonality?
     var sessionStartTime: Date?
     var isPaused: Bool = false
+    var isModelReady: Bool = false
 
     // MARK: - Computed
 
@@ -53,100 +51,216 @@ final class CreativeSessionViewModel {
         currentSession != nil && sessionStartTime != nil
     }
 
+    // MARK: - Dependencies
+
+    @ObservationIgnored private let coreMLService: CoreMLService
+    @ObservationIgnored private let hapticService: HapticService
+    @ObservationIgnored private let analyticsService: AnalyticsService
+    @ObservationIgnored private let modelContext: ModelContext
+
     // MARK: - Private
 
-    private var debounceTask: Task<Void, Never>?
-    private var typingEvents: [(timestamp: Date, wordCount: Int)] = []
+    @ObservationIgnored private var debounceTask: Task<Void, Never>?
+    @ObservationIgnored private var typingEvents: [(timestamp: Date, wordCount: Int)] = []
+    @ObservationIgnored private var wasInFlowState: Bool = false
+    @ObservationIgnored private var lastLoggedTextLength: Int = 0
+    @ObservationIgnored private var isBatchUpdating: Bool = false
+
+    // MARK: - Init
+
+    init(
+        coreMLService: CoreMLService,
+        hapticService: HapticService,
+        analyticsService: AnalyticsService,
+        modelContext: ModelContext
+    ) {
+        self.coreMLService = coreMLService
+        self.hapticService = hapticService
+        self.analyticsService = analyticsService
+        self.modelContext = modelContext
+    }
+
+    // MARK: - Model Loading
+
+    func loadModel() async {
+        do {
+            try await coreMLService.loadModel()
+            isModelReady = coreMLService.isModelLoaded
+        } catch {
+            self.error = error
+        }
+    }
+
+    // MARK: - Personality Seeding
+
+    func ensureBuiltInPersonalities() {
+        do {
+            let descriptor = FetchDescriptor<GhostPersonality>()
+            let existing = try modelContext.fetchCount(descriptor)
+            guard existing == 0 else { return }
+
+            let builtIns: [GhostPersonality] = [
+                .theMuse(), .theArchitect(), .theCritic(), .theVisionary(), .theAnalyst()
+            ]
+            for personality in builtIns {
+                modelContext.insert(personality)
+            }
+            try modelContext.save()
+        } catch {
+            self.error = error
+        }
+    }
 
     // MARK: - Session Lifecycle
 
-    func startSession(type: SessionType, personalityId: UUID) async {
+    func startSession(type: SessionType, personality: GhostPersonality) {
         selectedSessionType = type
-        currentPersonalityId = personalityId
+        selectedPersonality = personality
         sessionStartTime = .now
-        sessionText = ""
-        suggestions = []
         flowScore = 0
+        suggestions = []
         typingEvents = []
         error = nil
         isPaused = false
+        wasInFlowState = false
+        lastLoggedTextLength = 0
 
-        currentSession = CreativeSession(
+        isBatchUpdating = true
+        sessionText = ""
+        isBatchUpdating = false
+
+        let session = CreativeSession(
             userId: UUID(),
             type: type,
-            personalityId: personalityId
+            personalityId: personality.id
         )
+        modelContext.insert(session)
+        currentSession = session
+        saveContext()
+
+        analyticsService.trackSessionStart(type: type)
     }
 
-    func endSession() async {
+    func endSession() {
         debounceTask?.cancel()
 
-        currentSession?.endTime = .now
-        currentSession?.isLive = false
-        currentSession?.wordCount = wordCount
-        currentSession?.flowScore = flowScore
+        guard let session = currentSession else { return }
+        session.endTime = .now
+        session.isLive = false
+        session.wordCount = wordCount
+        session.flowScore = flowScore
+        saveContext()
+
+        analyticsService.trackSessionEnd(
+            wordCount: wordCount,
+            flowScore: flowScore,
+            duration: sessionDuration
+        )
 
         sessionStartTime = nil
+        currentSession = nil
+        suggestions = []
     }
 
     func togglePause() {
         isPaused.toggle()
     }
 
-    // MARK: - Text Input
-
-    func updateText(_ text: String) {
-        sessionText = text
-        recordTypingEvent()
-    }
-
     // MARK: - Suggestions
 
     func generateSuggestions() async {
         let trimmed = sessionText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
+        guard !trimmed.isEmpty, !isPaused else { return }
+        guard let personality = selectedPersonality else { return }
+        guard let session = currentSession else { return }
 
         isLoading = true
         defer { isLoading = false }
 
         do {
-            try await Task.sleep(for: .milliseconds(300))
+            let newSuggestions = try await coreMLService.generateSuggestions(
+                for: trimmed,
+                personality: personality,
+                count: 3
+            )
             guard !Task.isCancelled else { return }
-            suggestions = buildPlaceholderSuggestions()
+
+            for suggestion in newSuggestions {
+                suggestion.sessionId = session.id
+                modelContext.insert(suggestion)
+            }
+            saveContext()
+
+            withAnimation(.spring(duration: 0.4)) {
+                suggestions = newSuggestions
+            }
+
+            if let best = newSuggestions.max(by: { $0.confidenceScore < $1.confidenceScore }) {
+                hapticService.suggestionAppeared(confidence: best.confidenceScore)
+            }
+        } catch is CancellationError {
+            // Debounce cancelled — expected, not an error
         } catch {
             self.error = error
         }
     }
 
-    func acceptSuggestion(_ suggestion: GhostSuggestion) async {
+    func acceptSuggestion(_ suggestion: GhostSuggestion) {
         suggestion.accepted = true
+
+        isBatchUpdating = true
         sessionText += " " + suggestion.content
+        isBatchUpdating = false
+
+        currentSession?.ideaCount += 1
+        currentSession?.wordCount = wordCount
+
         withAnimation(.easeOut(duration: 0.25)) {
             suggestions.removeAll { $0.id == suggestion.id }
         }
+
+        saveContext()
+        hapticService.mediumTap()
+        analyticsService.trackSuggestionAccepted(suggestionId: suggestion.id)
+
+        debounceTextInput()
     }
 
-    func rejectSuggestion(_ suggestion: GhostSuggestion) async {
+    func rejectSuggestion(_ suggestion: GhostSuggestion) {
         suggestion.accepted = false
+
         withAnimation(.easeOut(duration: 0.25)) {
             suggestions.removeAll { $0.id == suggestion.id }
         }
+
+        saveContext()
+        hapticService.lightTap()
+        analyticsService.trackSuggestionRejected(suggestionId: suggestion.id)
     }
 
-    func rateSuggestion(_ suggestion: GhostSuggestion, rating: Int) async {
+    func rateSuggestion(_ suggestion: GhostSuggestion, rating: Int) {
         suggestion.userRating = max(-1, min(1, rating))
+        saveContext()
     }
 
-    // MARK: - Private Helpers
+    // MARK: - Private — Text Pipeline
+
+    private func onTextChanged() {
+        recordTypingEvent()
+        appendToRawInputLog()
+        debounceTextInput()
+    }
 
     private func debounceTextInput() {
         debounceTask?.cancel()
-        debounceTask = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: UInt64(AppConstants.debounceInterval * 1_000_000_000))
+        debounceTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(AppConstants.debounceInterval))
             guard !Task.isCancelled else { return }
-            await generateSuggestions()
+            await self?.generateSuggestions()
         }
     }
+
+    // MARK: - Private — Flow State Detection
 
     private func recordTypingEvent() {
         let event = (timestamp: Date.now, wordCount: wordCount)
@@ -166,31 +280,39 @@ final class CreativeSessionViewModel {
         let avg = intervals.reduce(0, +) / Double(intervals.count)
         let variance = intervals.map { pow($0 - avg, 2) }.reduce(0, +) / Double(intervals.count)
 
-        flowScore = max(0, min(100, 100 - (variance * 10)))
+        let newScore = max(0, min(100, 100 - (variance * 10)))
+        flowScore = newScore
+        currentSession?.flowScore = newScore
+
+        let nowInFlow = newScore > AppConstants.flowStateThreshold
+        if nowInFlow && !wasInFlowState {
+            hapticService.flowStatePulse()
+        }
+        wasInFlowState = nowInFlow
     }
 
-    private func buildPlaceholderSuggestions() -> [GhostSuggestion] {
-        let sessionId = currentSession?.id ?? UUID()
-        let personalityId = currentPersonalityId ?? UUID()
-        let tail = String(sessionText.suffix(120))
+    // MARK: - Private — Input Log
 
-        return [
-            GhostSuggestion(
-                sessionId: sessionId,
-                personalityId: personalityId,
-                content: "Consider expanding on this thought with a concrete example that grounds the idea...",
-                type: .continuation,
-                confidenceScore: 0.87,
-                contextBefore: tail
-            ),
-            GhostSuggestion(
-                sessionId: sessionId,
-                personalityId: personalityId,
-                content: "What if you approached this from the opposite perspective entirely?",
-                type: .challenge,
-                confidenceScore: 0.72,
-                contextBefore: tail
-            ),
-        ]
+    private func appendToRawInputLog() {
+        guard let session = currentSession else { return }
+        let currentLength = sessionText.count
+        guard currentLength > lastLoggedTextLength else { return }
+
+        let startIndex = sessionText.index(sessionText.startIndex, offsetBy: lastLoggedTextLength)
+        let delta = String(sessionText[startIndex...])
+        guard !delta.isEmpty else { return }
+
+        session.rawInputLog.append(delta)
+        lastLoggedTextLength = currentLength
+    }
+
+    // MARK: - Private — Persistence
+
+    private func saveContext() {
+        do {
+            try modelContext.save()
+        } catch {
+            self.error = error
+        }
     }
 }

@@ -79,6 +79,11 @@ final class PreferencesService: @unchecked Sendable {
             UserPreferences.Keys.highContrastEnabled,
             UserPreferences.Keys.textSize,
             UserPreferences.Keys.voiceFirstMode,
+            UserPreferences.Keys.aiSuggestionsEnabled,
+            UserPreferences.Keys.contentFilteringEnabled,
+            UserPreferences.Keys.reportAndBlockEnabled,
+            UserPreferences.Keys.age13OrOlderConfirmed,
+            UserPreferences.Keys.parentalConsentProvided,
             UserPreferences.Keys.creatorUsername,
             UserPreferences.Keys.preferredPersonality
         ]
@@ -103,6 +108,11 @@ final class PreferencesService: @unchecked Sendable {
             UserPreferences.Keys.highContrastEnabled: highContrastEnabled,
             UserPreferences.Keys.textSize: textSize,
             UserPreferences.Keys.voiceFirstMode: voiceFirstMode,
+            UserPreferences.Keys.aiSuggestionsEnabled: defaults.bool(forKey: UserPreferences.Keys.aiSuggestionsEnabled),
+            UserPreferences.Keys.contentFilteringEnabled: defaults.bool(forKey: UserPreferences.Keys.contentFilteringEnabled),
+            UserPreferences.Keys.reportAndBlockEnabled: defaults.bool(forKey: UserPreferences.Keys.reportAndBlockEnabled),
+            UserPreferences.Keys.age13OrOlderConfirmed: defaults.bool(forKey: UserPreferences.Keys.age13OrOlderConfirmed),
+            UserPreferences.Keys.parentalConsentProvided: defaults.bool(forKey: UserPreferences.Keys.parentalConsentProvided),
             UserPreferences.Keys.creatorUsername: creatorUsername
         ]
 
@@ -138,6 +148,12 @@ final class PreferencesService: @unchecked Sendable {
             UserPreferences.Keys.highContrastEnabled: false,
             UserPreferences.Keys.textSize: 1.0,
             UserPreferences.Keys.voiceFirstMode: false
+            ,
+            UserPreferences.Keys.aiSuggestionsEnabled: true,
+            UserPreferences.Keys.contentFilteringEnabled: true,
+            UserPreferences.Keys.reportAndBlockEnabled: true,
+            UserPreferences.Keys.age13OrOlderConfirmed: true,
+            UserPreferences.Keys.parentalConsentProvided: false
         ])
     }
 }

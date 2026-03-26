@@ -30,6 +30,21 @@ final class SettingsViewModel {
     @AppStorage(UserPreferences.Keys.voiceFirstMode) var voiceFirstMode: Bool = false
 
     @ObservationIgnored
+    @AppStorage(UserPreferences.Keys.aiSuggestionsEnabled) var aiSuggestionsEnabled: Bool = true
+
+    @ObservationIgnored
+    @AppStorage(UserPreferences.Keys.contentFilteringEnabled) var contentFilteringEnabled: Bool = true
+
+    @ObservationIgnored
+    @AppStorage(UserPreferences.Keys.reportAndBlockEnabled) var reportAndBlockEnabled: Bool = true
+
+    @ObservationIgnored
+    @AppStorage(UserPreferences.Keys.age13OrOlderConfirmed) var age13OrOlderConfirmed: Bool = true
+
+    @ObservationIgnored
+    @AppStorage(UserPreferences.Keys.parentalConsentProvided) var parentalConsentProvided: Bool = false
+
+    @ObservationIgnored
     @AppStorage(UserPreferences.Keys.preferredPersonality) var preferredPersonality: String = ""
 
     var showDeleteConfirmation: Bool = false
@@ -51,6 +66,11 @@ final class SettingsViewModel {
         highContrastEnabled = false
         textSize = 1.0
         voiceFirstMode = false
+        aiSuggestionsEnabled = true
+        contentFilteringEnabled = true
+        reportAndBlockEnabled = true
+        age13OrOlderConfirmed = true
+        parentalConsentProvided = false
         preferredPersonality = ""
     }
 
@@ -69,6 +89,11 @@ final class SettingsViewModel {
             "highContrastEnabled": highContrastEnabled,
             "textSize": textSize,
             "voiceFirstMode": voiceFirstMode,
+            "aiSuggestionsEnabled": aiSuggestionsEnabled,
+            "contentFilteringEnabled": contentFilteringEnabled,
+            "reportAndBlockEnabled": reportAndBlockEnabled,
+            "age13OrOlderConfirmed": age13OrOlderConfirmed,
+            "parentalConsentProvided": parentalConsentProvided,
             "exportDate": ISO8601DateFormatter().string(from: .now),
         ]
 

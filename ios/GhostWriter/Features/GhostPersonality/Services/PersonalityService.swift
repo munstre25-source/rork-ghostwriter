@@ -106,6 +106,10 @@ final class PersonalityService: @unchecked Sendable {
         try await Task.sleep(for: .seconds(Double.random(in: 0.5...1.5)))
 
         personality.downloads += 1
+        if let price = personality.purchasePrice {
+            // Marketplace split: creator receives 70%, platform receives 30%.
+            personality.revenue += price * 0.70
+        }
         availablePersonalities.append(personality)
         print("[Personality] Purchased '\(personality.name)'")
     }

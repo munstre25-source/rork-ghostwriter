@@ -1,8 +1,29 @@
 import SwiftUI
 
-struct SubscriptionView: View {
+// MARK: - SubscriptionView
 
-    @State private var viewModel = SubscriptionViewModel()
+/// Reads ``SubscriptionService`` from the environment and forwards it to the
+/// stateful content view. This thin wrapper keeps the call-site
+/// `SubscriptionView()` unchanged across the codebase.
+struct SubscriptionView: View {
+    @Environment(SubscriptionService.self) private var service
+
+    var body: some View {
+        SubscriptionContent(service: service)
+    }
+}
+
+// MARK: - SubscriptionContent
+
+/// The actual subscription paywall UI backed by a ``SubscriptionViewModel``.
+private struct SubscriptionContent: View {
+
+    @State private var viewModel: SubscriptionViewModel
+    @Environment(\.openURL) private var openURL
+
+    init(service: SubscriptionService) {
+        _viewModel = State(initialValue: SubscriptionViewModel(service: service))
+    }
 
     var body: some View {
         NavigationStack {
@@ -32,6 +53,17 @@ struct SubscriptionView: View {
                 Button("Let's Go", role: .cancel) {}
             } message: {
                 Text("Your subscription is now active. Enjoy your new features!")
+            }
+            .alert(
+                "Something Went Wrong",
+                isPresented: Binding(
+                    get: { viewModel.errorMessage != nil },
+                    set: { if !$0 { viewModel.errorMessage = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(viewModel.errorMessage ?? "")
             }
         }
     }
@@ -187,14 +219,18 @@ struct SubscriptionView: View {
 
             if !isCurrent && tier != .free {
                 Button {
-                    Task { try? await viewModel.purchase(tier: tier) }
+                    if tier == .enterprise {
+                        openURL(URL(string: "https://ghostwriter.app/enterprise")!)
+                    } else {
+                        Task { await viewModel.purchase(tier: tier) }
+                    }
                 } label: {
                     Group {
-                        if viewModel.isPurchasing && viewModel.selectedTier == tier {
+                        if tier != .enterprise && viewModel.isPurchasing && viewModel.selectedTier == tier {
                             ProgressView()
                                 .tint(.ghostBackground)
                         } else {
-                            Text(tier == .free ? "Current Plan" : "Choose \(tier.displayName)")
+                            Text(tier == .enterprise ? "Contact Sales" : "Choose \(tier.displayName)")
                                 .font(.system(size: 15, weight: .bold))
                         }
                     }
@@ -212,7 +248,7 @@ struct SubscriptionView: View {
                     )
                 }
                 .hapticFeedback(.medium)
-                .disabled(viewModel.isPurchasing)
+                .disabled(tier != .enterprise && viewModel.isPurchasing)
             }
         }
         .padding(16)
@@ -232,7 +268,7 @@ struct SubscriptionView: View {
 
     private var trialBanner: some View {
         Button {
-            Task { try? await viewModel.purchase(tier: .pro) }
+            Task { await viewModel.purchase(tier: .pro) }
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: "gift.fill")
@@ -272,18 +308,17 @@ struct SubscriptionView: View {
                 .font(.system(size: 18, weight: .bold))
                 .foregroundStyle(.ghostText)
 
-            let features: [(String, Bool, Bool, Bool, Bool)] = [
-                ("Creative Sessions",    true,  true,  true,  true),
-                ("Basic Sharing",        true,  true,  true,  true),
-                ("Unlimited Sessions",   false, true,  true,  true),
-                ("All Personalities",    false, true,  true,  true),
-                ("HD Clip Export",       false, true,  true,  true),
-                ("Custom Personalities", false, false, true,  true),
-                ("Advanced AI",          false, false, true,  true),
-                ("Detailed Analytics",   false, false, true,  true),
-                ("Live Jam",             false, false, false, true),
-                ("Monetization Tools",   false, false, false, true),
-                ("Marketplace Access",   false, false, false, true),
+            let features: [(String, Bool, Bool, Bool, Bool, Bool)] = [
+                ("Creative Sessions",    true,  true,  true,  true,  true),
+                ("Basic Sharing",        true,  true,  true,  true,  true),
+                ("Unlimited Sessions",   false, true,  true,  true,  true),
+                ("5 Built-in Personalities", false, true, true, true, true),
+                ("20 Personalities",     false, false, true,  true,  true),
+                ("Live Jam",             true,  true,  true,  true,  true),
+                ("Clip Monetization",    false, true,  true,  true,  true),
+                ("Team Workspace",       false, false, false, true,  true),
+                ("API Access",           false, false, false, false, true),
+                ("SSO / Enterprise Security", false, false, false, false, true),
             ]
 
             VStack(spacing: 0) {
@@ -295,7 +330,8 @@ struct SubscriptionView: View {
                         free: feature.1,
                         creator: feature.2,
                         pro: feature.3,
-                        studio: feature.4
+                        studio: feature.4,
+                        enterprise: feature.5
                     )
                 }
             }
@@ -311,25 +347,25 @@ struct SubscriptionView: View {
                 Text(tier.displayName)
                     .font(.system(size: 10, weight: .bold))
                     .foregroundStyle(.ghostText.opacity(0.6))
-                    .frame(width: 50)
+                    .frame(width: 54)
             }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
     }
 
-    private func comparisonRow(name: String, free: Bool, creator: Bool, pro: Bool, studio: Bool) -> some View {
+    private func comparisonRow(name: String, free: Bool, creator: Bool, pro: Bool, studio: Bool, enterprise: Bool) -> some View {
         HStack {
             Text(name)
                 .font(.system(size: 12))
                 .foregroundStyle(.ghostText.opacity(0.8))
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            ForEach([free, creator, pro, studio], id: \.self) { included in
+            ForEach([free, creator, pro, studio, enterprise], id: \.self) { included in
                 Image(systemName: included ? "checkmark" : "minus")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(included ? .ghostEmerald : .ghostText.opacity(0.2))
-                    .frame(width: 50)
+                    .frame(width: 54)
             }
         }
         .padding(.horizontal, 12)
@@ -340,7 +376,7 @@ struct SubscriptionView: View {
 
     private var restoreButton: some View {
         Button {
-            Task { try? await viewModel.restorePurchases() }
+            Task { await viewModel.restorePurchases() }
         } label: {
             Text("Restore Purchases")
                 .font(.system(size: 14, weight: .medium))
@@ -352,5 +388,6 @@ struct SubscriptionView: View {
 
 #Preview {
     SubscriptionView()
+        .environment(SubscriptionService())
         .preferredColorScheme(.dark)
 }

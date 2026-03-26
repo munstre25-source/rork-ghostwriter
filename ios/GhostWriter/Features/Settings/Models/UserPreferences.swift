@@ -43,5 +43,20 @@ struct UserPreferences: Sendable {
 
         /// Whether voice-first input mode is enabled.
         static let voiceFirstMode = "user_pref_voice_first_mode"
+
+        /// Whether AI suggestions are enabled.
+        static let aiSuggestionsEnabled = "user_pref_ai_suggestions_enabled"
+
+        /// Whether on-device content filtering is enabled for safety guardrails.
+        static let contentFilteringEnabled = "user_pref_content_filtering_enabled"
+
+        /// Whether users can report public content and creators in discovery.
+        static let reportAndBlockEnabled = "user_pref_report_and_block_enabled"
+
+        /// Age-gate confirmation used for COPPA compliance.
+        static let age13OrOlderConfirmed = "user_pref_age_13_or_older_confirmed"
+
+        /// Whether parental consent is provided when the user is under 13.
+        static let parentalConsentProvided = "user_pref_parental_consent_provided"
     }
 }

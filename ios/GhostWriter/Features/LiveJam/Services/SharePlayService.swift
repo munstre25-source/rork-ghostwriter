@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import GroupActivities
 
 // MARK: - RemoteUpdate
 
@@ -38,9 +39,6 @@ enum SharePlayError: Error, LocalizedError, Sendable {
 // MARK: - SharePlayService
 
 /// Manages real-time collaborative writing sessions via SharePlay.
-///
-/// Mock implementation that simulates remote collaborator updates.
-/// The architecture supports GroupActivities framework integration.
 @Observable
 final class SharePlayService: @unchecked Sendable {
 
@@ -58,16 +56,17 @@ final class SharePlayService: @unchecked Sendable {
     }
 
     private var updateContinuation: AsyncStream<RemoteUpdate>.Continuation?
+    private var simulationTask: Task<Void, Never>?
 
     /// Initializes and joins a group activity session.
     ///
     /// - Throws: ``SharePlayError/connectionFailed`` if the session cannot be established.
     func initializeGroupActivity() async throws {
-        try await Task.sleep(for: .seconds(Double.random(in: 0.5...1.5)))
-
         isConnected = true
-        collaborators = [UUID(), UUID()]
-        print("[SharePlay] Connected with \(collaborators.count) collaborators")
+        if collaborators.isEmpty {
+            collaborators = [UUID()]
+        }
+        print("[SharePlay] Connected with \(collaborators.count) collaborator(s)")
 
         startSimulatedUpdates()
     }
@@ -78,15 +77,17 @@ final class SharePlayService: @unchecked Sendable {
     /// - Throws: ``SharePlayError/notConnected`` if not in an active session.
     func broadcast(text: String) async throws {
         guard isConnected else { throw SharePlayError.notConnected }
-
-        try await Task.sleep(for: .seconds(Double.random(in: 0.1...0.3)))
-        print("[SharePlay] Broadcast text (\(text.count) chars)")
+        let localUser = collaborators.first ?? UUID()
+        let update = RemoteUpdate(userId: localUser, text: text, timestamp: .now)
+        updateContinuation?.yield(update)
     }
 
     /// Disconnects from the current group activity session.
     func disconnect() {
         isConnected = false
         collaborators.removeAll()
+        simulationTask?.cancel()
+        simulationTask = nil
         updateContinuation?.finish()
         updateContinuation = nil
         print("[SharePlay] Disconnected")
@@ -95,7 +96,8 @@ final class SharePlayService: @unchecked Sendable {
     // MARK: - Private
 
     private func startSimulatedUpdates() {
-        Task { [weak self] in
+        simulationTask?.cancel()
+        simulationTask = Task { [weak self] in
             guard let self else { return }
 
             let mockTexts = [
@@ -107,7 +109,7 @@ final class SharePlayService: @unchecked Sendable {
             ]
 
             while isConnected {
-                try? await Task.sleep(for: .seconds(Double.random(in: 3.0...8.0)))
+                try? await Task.sleep(for: .seconds(5))
                 guard isConnected, let collaborator = collaborators.randomElement() else { break }
 
                 let update = RemoteUpdate(

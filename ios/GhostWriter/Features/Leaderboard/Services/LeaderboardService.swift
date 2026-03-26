@@ -70,19 +70,44 @@ final class LeaderboardService: @unchecked Sendable {
     ///
     /// - Returns: An array of friend ``LeaderboardEntry`` records.
     /// - Throws: ``LeaderboardError/loadFailed`` if data cannot be loaded.
-    func loadFriendLeaderboard() async throws -> [LeaderboardEntry] {
-        try await Task.sleep(for: .seconds(Double.random(in: 0.5...1.0)))
+    func loadFriendLeaderboard(category: LeaderboardCategory) async throws -> [LeaderboardEntry] {
+        try await Task.sleep(for: .milliseconds(550))
 
         let friendNames = Array(mockUsernames.prefix(5))
 
-        return friendNames.enumerated().map { index, username in
+        var friends = friendNames.enumerated().map { index, username in
             LeaderboardEntry(
                 userId: UUID(),
                 username: username,
                 score: Int.random(in: 500...5000),
                 rank: index + 1,
-                category: currentCategory
+                category: category
             )
         }
+
+        // Include the current user in friend scope for better social feedback loops.
+        friends.append(
+            LeaderboardEntry(
+                userId: UUID(),
+                username: "you_creator",
+                score: Int.random(in: 700...5200),
+                rank: 0,
+                category: category
+            )
+        )
+
+        return friends
+            .sorted { $0.score > $1.score }
+            .enumerated()
+            .map { index, entry in
+                LeaderboardEntry(
+                    id: entry.id,
+                    userId: entry.userId,
+                    username: entry.username,
+                    score: entry.score,
+                    rank: index + 1,
+                    category: entry.category
+                )
+            }
     }
 }

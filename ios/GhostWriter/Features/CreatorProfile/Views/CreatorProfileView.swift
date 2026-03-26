@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct CreatorProfileView: View {
+    var userId: UUID?
     @State private var viewModel = CreatorProfileViewModel()
 
     var body: some View {
