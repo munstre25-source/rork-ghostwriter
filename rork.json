@@ -1,9 +1,10 @@
 {
-  "apps": [
-    {
-      "name": "FlowCrest",
-      "path": "ios",
-      "framework": "swift"
-    }
-  ]
+  "name": "GhostWriter",
+  "displayName": "GhostWriter AI",
+  "description": "Your Live Creative Partner — AI-powered creative sessions with haptic feedback, live collaboration, and creator marketplace.",
+  "bundleIdentifier": "com.ghostwriter.app",
+  "version": "1.0.0",
+  "platform": "ios",
+  "minimumDeploymentTarget": "18.0",
+  "swiftVersion": "6.0"
 }

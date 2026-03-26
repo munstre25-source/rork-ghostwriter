@@ -1,0 +1,67 @@
+/* GhostWriter Localizable Strings */
+
+/* App */
+"app.name" = "GhostWriter AI";
+"app.tagline" = "Your Live Creative Partner";
+
+/* Tabs */
+"tab.live" = "Live";
+"tab.discover" = "Discover";
+"tab.clips" = "Clips";
+"tab.creator" = "Creator";
+"tab.settings" = "Settings";
+
+/* Session Types */
+"session.type.writing" = "Writing";
+"session.type.brainstorming" = "Brainstorming";
+"session.type.coding" = "Coding";
+"session.type.design" = "Design";
+"session.type.freestyle" = "Freestyle";
+
+/* Suggestion Types */
+"suggestion.type.continuation" = "Continuation";
+"suggestion.type.challenge" = "Challenge";
+"suggestion.type.summary" = "Summary";
+"suggestion.type.reframe" = "Reframe";
+"suggestion.type.expand" = "Expand";
+
+/* GhostBoard */
+"ghostboard.placeholder" = "Start writing... your ghost is listening";
+"ghostboard.flow_state" = "In Flow State";
+"ghostboard.words" = "words";
+"ghostboard.end_session" = "End Session";
+"ghostboard.capture_clip" = "Capture Clip";
+
+/* Personalities */
+"personality.the_muse" = "The Muse";
+"personality.the_architect" = "The Architect";
+"personality.the_critic" = "The Critic";
+"personality.the_visionary" = "The Visionary";
+"personality.the_analyst" = "The Analyst";
+
+/* Onboarding */
+"onboarding.welcome.title" = "Your AI Creative Partner";
+"onboarding.welcome.subtitle" = "Transform solitary thinking into a live, collaborative experience.";
+"onboarding.quiz.title" = "What's Your Creative Style?";
+"onboarding.first_session.title" = "Your First Session";
+"onboarding.first_spark.title" = "Your First Spark!";
+"onboarding.monetization.title" = "Go Pro";
+"onboarding.social_proof.title" = "Join the Community";
+
+/* Subscription */
+"subscription.free" = "Free";
+"subscription.creator" = "Creator";
+"subscription.pro" = "Pro";
+"subscription.studio" = "Studio";
+"subscription.enterprise" = "Enterprise";
+"subscription.try_pro" = "Try Pro Free for 7 Days";
+
+/* General */
+"general.loading" = "Loading...";
+"general.error" = "Something went wrong";
+"general.retry" = "Retry";
+"general.cancel" = "Cancel";
+"general.save" = "Save";
+"general.done" = "Done";
+"general.share" = "Share";
+"general.delete" = "Delete";

@@ -1,34 +1,24 @@
-# React Native / Expo artifacts (should not exist in Swift projects)
-node_modules/
-.expo/
-.bundle/
-android/
-ios/
-babel.config.js
-metro.config.js
-package.json
-package-lock.json
-tsconfig.json
-app.json
-
 # Xcode
-build/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
 DerivedData/
-*.xcuserstate
-*.xcuserdatad/
-xcuserdata/
+build/
+*.ipa
+*.dSYM.zip
+*.dSYM
 
 # Swift Package Manager
 .build/
 .swiftpm/
 Package.resolved
+Packages/
 
-# macOS
+# CocoaPods
+Pods/
+
+# System
 .DS_Store
 *.swp
 *~
-
-# Rork
-.rork/
-.env
-Config.swift
