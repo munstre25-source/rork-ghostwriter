@@ -344,7 +344,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ssocialreporthq.ghostwriter;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ghostwriter.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -378,7 +378,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ssocialreporthq.ghostwriter;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ghostwriter.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -398,7 +398,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ssocialreporthq.ghostwriter.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ghostwriter.app.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -417,7 +417,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ssocialreporthq.ghostwriter.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ghostwriter.app.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -430,6 +430,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		A0000013GHOSTWRITER00013 /* Build configuration list for PBXProject "GhostWriter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A0000014GHOSTWRITER00014 /* Debug */,
+				A0000015GHOSTWRITER00015 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		A000000BGHOSTWRITER0000B /* Build configuration list for PBXNativeTarget "GhostWriter" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -448,16 +457,8 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A0000013GHOSTWRITER00013 /* Build configuration list for PBXProject "GhostWriter" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				A0000014GHOSTWRITER00014 /* Debug */,
-				A0000015GHOSTWRITER00015 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 /* End XCConfigurationList section */
+
 	};
 	rootObject = A0000000GHOSTWRITER00000 /* Project object */;
 }
