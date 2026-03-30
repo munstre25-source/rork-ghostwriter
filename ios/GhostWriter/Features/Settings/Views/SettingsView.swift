@@ -13,7 +13,6 @@ struct SettingsView: View {
                     profileSection
                     preferencesSection
                     accessibilitySection
-                    trustAndSafetySection
                     subscriptionSection
                     integrationsSection
                     aboutSection
@@ -154,49 +153,6 @@ struct SettingsView: View {
 
     // MARK: - Subscription
 
-    private var trustAndSafetySection: some View {
-        Section {
-            Toggle(isOn: $viewModel.aiSuggestionsEnabled) {
-                Label("AI Suggestions", systemImage: "sparkles")
-                    .foregroundStyle(.ghostText)
-            }
-            .tint(.ghostCyan)
-
-            Toggle(isOn: $viewModel.contentFilteringEnabled) {
-                Label("Content Safety Filtering", systemImage: "shield.checkered")
-                    .foregroundStyle(.ghostText)
-            }
-            .tint(.ghostCyan)
-
-            Toggle(isOn: $viewModel.reportAndBlockEnabled) {
-                Label("Report & Block Tools", systemImage: "flag.fill")
-                    .foregroundStyle(.ghostText)
-            }
-            .tint(.ghostCyan)
-
-            Toggle(isOn: $viewModel.age13OrOlderConfirmed) {
-                Label("I am 13 or older", systemImage: "person.crop.circle.badge.checkmark")
-                    .foregroundStyle(.ghostText)
-            }
-            .tint(.ghostCyan)
-
-            if !viewModel.age13OrOlderConfirmed {
-                Toggle(isOn: $viewModel.parentalConsentProvided) {
-                    Label("Parental Consent Provided", systemImage: "person.2.badge.key.fill")
-                        .foregroundStyle(.ghostText)
-                }
-                .tint(.ghostCyan)
-            }
-        } header: {
-            Text("Trust & Safety")
-                .foregroundStyle(.ghostText.opacity(0.5))
-        } footer: {
-            Text("AI suggestions run on-device. Safety filters help reduce harmful outputs. Public content can be reported and blocked.")
-                .foregroundStyle(.ghostText.opacity(0.35))
-        }
-        .listRowBackground(Color.white.opacity(0.04))
-    }
-
     private var subscriptionSection: some View {
         Section {
             NavigationLink {
@@ -288,34 +244,6 @@ struct SettingsView: View {
 
             Link(destination: URL(string: "https://ghostwriter.app/terms")!) {
                 Label("Terms of Service", systemImage: "doc.text.fill")
-                    .foregroundStyle(.ghostText)
-            }
-
-            DisclosureGroup {
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(AppStoreMetadata.reviewerDemoGuide, id: \.self) { step in
-                        Text("• \(step)")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.ghostText.opacity(0.65))
-                    }
-                }
-                .padding(.vertical, 6)
-            } label: {
-                Label("Reviewer Demo Guide", systemImage: "checklist")
-                    .foregroundStyle(.ghostText)
-            }
-
-            DisclosureGroup {
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(AppStoreMetadata.privacyCommitments, id: \.self) { item in
-                        Text("• \(item)")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.ghostText.opacity(0.65))
-                    }
-                }
-                .padding(.vertical, 6)
-            } label: {
-                Label("Privacy Commitments", systemImage: "lock.shield")
                     .foregroundStyle(.ghostText)
             }
         } header: {

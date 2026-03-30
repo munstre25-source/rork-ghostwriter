@@ -11,7 +11,6 @@ struct LeaderboardView: View {
 
                 ScrollView {
                     VStack(spacing: 20) {
-                        scopeTabs
                         categoryTabs
 
                         if viewModel.isLoading {
@@ -45,38 +44,6 @@ struct LeaderboardView: View {
     }
 
     // MARK: - Category Tabs
-
-    private var scopeTabs: some View {
-        HStack(spacing: 10) {
-            ForEach(LeaderboardScope.allCases) { scope in
-                Button {
-                    Task { await viewModel.switchScope(scope) }
-                } label: {
-                    Text(scope.title)
-                        .font(.system(size: 13, weight: .semibold))
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(
-                            Capsule()
-                                .fill(viewModel.selectedScope == scope
-                                      ? Color.ghostMagenta.opacity(0.2)
-                                      : Color.white.opacity(0.06))
-                        )
-                        .overlay(
-                            Capsule()
-                                .stroke(viewModel.selectedScope == scope
-                                        ? Color.ghostMagenta.opacity(0.6)
-                                        : Color.white.opacity(0.1), lineWidth: 1)
-                        )
-                        .foregroundStyle(viewModel.selectedScope == scope
-                                         ? .ghostMagenta
-                                         : .ghostText.opacity(0.6))
-                }
-                .hapticFeedback(.light)
-            }
-            Spacer()
-        }
-    }
 
     private var categoryTabs: some View {
         ScrollView(.horizontal, showsIndicators: false) {

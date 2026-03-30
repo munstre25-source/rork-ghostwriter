@@ -3,8 +3,6 @@ import SwiftUI
 struct DiscoverView: View {
     @State private var viewModel = DiscoverViewModel()
     @State private var trendingVM = TrendingViewModel()
-    @Environment(ModerationService.self) private var moderationService
-    @State private var moderationMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -22,25 +20,11 @@ struct DiscoverView: View {
             .navigationBarTitleDisplayMode(.large)
             .searchable(text: $viewModel.searchQuery, prompt: "Search creators, personalities...")
             .onSubmit(of: .search) { Task { await viewModel.search() } }
-            .onChange(of: viewModel.searchQuery) { _, _ in
-                Task { await viewModel.search() }
-            }
             .task {
                 await viewModel.loadFeed()
                 await trendingVM.loadTrending()
             }
             .refreshable { await viewModel.refresh() }
-            .alert(
-                "Safety Action",
-                isPresented: Binding(
-                    get: { moderationMessage != nil },
-                    set: { if !$0 { moderationMessage = nil } }
-                )
-            ) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(moderationMessage ?? "")
-            }
         }
     }
 
@@ -49,7 +33,7 @@ struct DiscoverView: View {
             HStack(spacing: 8) {
                 ForEach(DiscoverFilter.allCases) { filter in
                     Button {
-                        viewModel.setFilter(filter)
+                        viewModel.selectedFilter = filter
                     } label: {
                         Label(filter.displayName, systemImage: filter.icon)
                             .font(.caption.bold())
@@ -74,24 +58,19 @@ struct DiscoverView: View {
                 Text("Write 500 words this week")
                     .font(.subheadline.bold())
                     .foregroundColor(.ghostText)
-                Text("5,600 participants · Sponsored by InkFlow")
+                Text("5,600 participants")
                     .font(.caption2)
                     .foregroundColor(.gray)
             }
             Spacer()
-            VStack(spacing: 6) {
-                Text("$1,500 prize")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Color.ghostGold)
-                Button("Join") { }
-                    .font(.caption.bold())
-                    .foregroundColor(.black)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color.ghostGold)
-                    .cornerRadius(14)
-                    .hapticFeedback(.medium)
-            }
+            Button("Join") { }
+                .font(.caption.bold())
+                .foregroundColor(.black)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.ghostGold)
+                .cornerRadius(14)
+                .hapticFeedback(.medium)
         }
         .padding()
         .background(
@@ -107,7 +86,7 @@ struct DiscoverView: View {
 
     private var feedSection: some View {
         LazyVStack(spacing: 12) {
-            ForEach(viewModel.filteredItems.filter { !moderationService.isBlocked($0.creatorId) }) { item in
+            ForEach(viewModel.filteredItems) { item in
                 discoveryCard(item)
             }
         }
@@ -135,14 +114,20 @@ struct DiscoverView: View {
                     .foregroundColor(.ghostText)
                     .lineLimit(1)
 
-                Text(item.subtitle)
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                    .lineLimit(2)
+                if let subtitle = item.subtitle {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .lineLimit(2)
+                }
 
                 HStack(spacing: 10) {
-                    Label("\(item.viewCount)", systemImage: "eye")
-                    Label("\(item.likeCount)", systemImage: "heart")
+                    if let views = item.viewCount {
+                        Label("\(views)", systemImage: "eye")
+                    }
+                    if let likes = item.likeCount {
+                        Label("\(likes)", systemImage: "heart")
+                    }
                 }
                 .font(.caption2)
                 .foregroundColor(.gray)
@@ -158,18 +143,6 @@ struct DiscoverView: View {
         .background(.ultraThinMaterial)
         .cornerRadius(14)
         .hapticFeedback(.light)
-        .contextMenu {
-            Button("Report Content", systemImage: "flag.fill") {
-                Task {
-                    await moderationService.reportContent(itemId: item.id, reason: "User report")
-                    moderationMessage = "Thanks for your report. Our moderation team will review this content."
-                }
-            }
-            Button("Block Creator", systemImage: "hand.raised.fill", role: .destructive) {
-                moderationService.blockCreator(item.creatorId)
-                moderationMessage = "Creator blocked. Their public content is hidden from your feed."
-            }
-        }
     }
 }
 

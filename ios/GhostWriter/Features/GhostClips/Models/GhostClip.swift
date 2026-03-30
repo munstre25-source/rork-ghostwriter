@@ -78,7 +78,7 @@ final class GhostClip: @unchecked Sendable {
     ///   - isMonetized: Monetization state. Defaults to `false`.
     ///   - cpmRevenue: CPM revenue earned. Defaults to `0`.
     ///   - isPublic: Public visibility. Defaults to `true`.
-    ///   - personalityUsed: Name of the personality used. Defaults to `"The Muse"`.
+    ///   - personalityUsed: Name of the personality used.
     init(
         id: UUID = UUID(),
         sessionId: UUID,
@@ -96,7 +96,7 @@ final class GhostClip: @unchecked Sendable {
         isMonetized: Bool = false,
         cpmRevenue: Double = 0,
         isPublic: Bool = true,
-        personalityUsed: String = "The Muse"
+        personalityUsed: String
     ) {
         self.id = id
         self.sessionId = sessionId

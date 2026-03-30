@@ -2,8 +2,6 @@ import SwiftUI
 
 struct LiveJamView: View {
     @State private var viewModel = LiveJamViewModel()
-    @State private var capturedClip: GhostClip?
-    @State private var showCaptureSheet = false
 
     var body: some View {
         ZStack {
@@ -17,11 +15,6 @@ struct LiveJamView: View {
         }
         .navigationTitle("Live Jam")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showCaptureSheet) {
-            if let capturedClip {
-                GhostClipShareSheet(clip: capturedClip)
-            }
-        }
     }
 
     private var connectedView: some View {
@@ -90,9 +83,6 @@ struct LiveJamView: View {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(Color.ghostCyan.opacity(0.3), lineWidth: 1)
                 )
-                .onChange(of: viewModel.localText) { _, newValue in
-                    Task { await viewModel.sendText(newValue) }
-                }
         }
     }
 
@@ -176,8 +166,7 @@ struct LiveJamView: View {
             Spacer()
 
             Button {
-                capturedClip = viewModel.captureClip()
-                showCaptureSheet = capturedClip != nil
+                // Capture clip action
             } label: {
                 Label("Capture", systemImage: "record.circle")
                     .foregroundColor(.ghostGold)

@@ -38,7 +38,6 @@ final class PersonalityMarketplaceViewModel {
 
     private let personalityService: PersonalityService
     private let hapticService: HapticService
-    private let trialStoreKey = "ghostwriter_marketplace_trialed_ids"
 
     init(personalityService: PersonalityService, hapticService: HapticService) {
         self.personalityService = personalityService
@@ -122,39 +121,12 @@ final class PersonalityMarketplaceViewModel {
     }
 
     func tryPersonality(_ personality: GhostPersonality) async {
-        guard canTryPersonality(personality) else { return }
         hapticService.personalityHaptic(pattern: personality.hapticPattern)
         try? await Task.sleep(for: .milliseconds(280))
         hapticService.lightTap()
-        markTrialUsed(for: personality)
     }
 
     func isOwned(_ personality: GhostPersonality) -> Bool {
         personalityService.availablePersonalities.contains { $0.id == personality.id }
-    }
-
-    func canTryPersonality(_ personality: GhostPersonality) -> Bool {
-        if isOwned(personality) { return true }
-        return !trialedPersonalityIds().contains(personality.id.uuidString)
-    }
-
-    func trialButtonTitle(for personality: GhostPersonality) -> String {
-        canTryPersonality(personality) ? "Try 1 Session" : "Trial Used"
-    }
-
-    func creatorPayoutText(for personality: GhostPersonality) -> String? {
-        guard let price = personality.purchasePrice else { return nil }
-        return String(format: "Creator earns $%.2f (70%%)", price * 0.70)
-    }
-
-    private func markTrialUsed(for personality: GhostPersonality) {
-        var ids = trialedPersonalityIds()
-        ids.insert(personality.id.uuidString)
-        UserDefaults.standard.set(Array(ids), forKey: trialStoreKey)
-    }
-
-    private func trialedPersonalityIds() -> Set<String> {
-        let raw = UserDefaults.standard.stringArray(forKey: trialStoreKey) ?? []
-        return Set(raw)
     }
 }

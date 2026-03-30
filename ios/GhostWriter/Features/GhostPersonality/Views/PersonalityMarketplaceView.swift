@@ -204,9 +204,6 @@ private struct MarketplaceBody: View {
                 PersonalityCard(
                     personality: personality,
                     isOwned: viewModel.isOwned(personality),
-                    canTry: viewModel.canTryPersonality(personality),
-                    trialButtonTitle: viewModel.trialButtonTitle(for: personality),
-                    creatorPayoutText: viewModel.creatorPayoutText(for: personality),
                     onTry: {
                         Task { await viewModel.tryPersonality(personality) }
                     },

@@ -12,10 +12,8 @@ struct GhostWriterApp: App {
     let clipService = ClipService()
     let personalityService = PersonalityService()
     let discoveryService = DiscoveryService()
-    let moderationService = ModerationService()
     let creatorAnalyticsService = CreatorAnalyticsService()
     let paymentService = PaymentService()
-    let subscriptionService = SubscriptionService()
 
     var body: some Scene {
         WindowGroup {
@@ -29,10 +27,8 @@ struct GhostWriterApp: App {
                 .environment(clipService)
                 .environment(personalityService)
                 .environment(discoveryService)
-                .environment(moderationService)
                 .environment(creatorAnalyticsService)
                 .environment(paymentService)
-                .environment(subscriptionService)
                 .preferredColorScheme(.dark)
         }
         .modelContainer(for: [

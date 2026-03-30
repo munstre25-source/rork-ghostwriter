@@ -1,6 +1,5 @@
 import SwiftUI
 import Foundation
-import UIKit
 
 enum SharePlatform: String, CaseIterable, Identifiable {
     case tiktok, instagram, youtube, twitter, generic
@@ -47,10 +46,10 @@ final class GhostClipShareViewModel: @unchecked Sendable {
     var caption: String = ""
 
     func generateShareURL() async throws -> URL {
-        guard let clip else {
-            throw URLError(.badURL)
-        }
-        let url = URL(string: "https://ghostwriter.app/clip/\(clip.id.uuidString)")!
+        isSharing = true
+        defer { isSharing = false }
+        try await Task.sleep(for: .seconds(0.5))
+        let url = URL(string: "https://ghostwriter.app/clip/\(clip?.id.uuidString ?? UUID().uuidString)")!
         shareURL = url
         return url
     }
@@ -59,35 +58,11 @@ final class GhostClipShareViewModel: @unchecked Sendable {
         selectedPlatform = platform
         isSharing = true
         defer { isSharing = false }
-        let deepLink = try await generateShareURL()
-        guard let platformURL = composePlatformShareURL(platform: platform, deepLink: deepLink) else {
-            return
-        }
-        await MainActor.run {
-            UIApplication.shared.open(platformURL)
-        }
+        try await Task.sleep(for: .seconds(1))
     }
 
     func copyLink() {
         guard let url = shareURL else { return }
         UIPasteboard.general.string = url.absoluteString
-    }
-
-    private func composePlatformShareURL(platform: SharePlatform, deepLink: URL) -> URL? {
-        let encodedLink = deepLink.absoluteString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? deepLink.absoluteString
-        let encodedCaption = caption.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? caption
-
-        switch platform {
-        case .twitter:
-            return URL(string: "https://twitter.com/intent/tweet?text=\(encodedCaption)%20\(encodedLink)")
-        case .youtube:
-            return URL(string: "https://www.youtube.com/upload")
-        case .instagram:
-            return URL(string: "https://www.instagram.com/")
-        case .tiktok:
-            return URL(string: "https://www.tiktok.com/upload")
-        case .generic:
-            return deepLink
-        }
     }
 }

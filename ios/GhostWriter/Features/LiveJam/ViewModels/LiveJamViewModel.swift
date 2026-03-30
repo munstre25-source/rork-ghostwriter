@@ -12,48 +12,30 @@ final class LiveJamViewModel: @unchecked Sendable {
     var collaboratorName: String?
     var error: Error?
 
-    @ObservationIgnored private let sharePlayService = SharePlayService()
     private var jamTask: Task<Void, Never>?
-    private var updatesTask: Task<Void, Never>?
 
     func startLiveJam(with collaboratorId: UUID) async throws {
         isLoading = true
         defer { isLoading = false }
+        isConnected = true
         collaboratorName = "Creator_\(collaboratorId.uuidString.prefix(4))"
-        sharePlayService.collaborators = [collaboratorId]
-        try await sharePlayService.initializeGroupActivity()
-        isConnected = sharePlayService.isConnected
 
         jamTask = Task {
             await withTaskGroup(of: Void.self) { group in
+                group.addTask { await self.simulateRemoteUpdates() }
                 group.addTask { await self.generateSharedSuggestions() }
-            }
-        }
-        updatesTask = Task { [weak self] in
-            guard let self else { return }
-            for await update in self.sharePlayService.remoteUpdates {
-                guard !Task.isCancelled else { break }
-                if update.userId != collaboratorId {
-                    continue
-                }
-                self.remoteText = update.text
-                self.updateCollaborationScore()
             }
         }
     }
 
     func sendText(_ text: String) async {
         localText = text
-        try? await sharePlayService.broadcast(text: text)
         updateCollaborationScore()
     }
 
     func endLiveJam() async {
         jamTask?.cancel()
         jamTask = nil
-        updatesTask?.cancel()
-        updatesTask = nil
-        sharePlayService.disconnect()
         isConnected = false
     }
 
@@ -63,21 +45,20 @@ final class LiveJamViewModel: @unchecked Sendable {
         }
     }
 
-    func captureClip() -> GhostClip {
-        let merged = [localText, remoteText]
-            .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-            .joined(separator: "\n\n")
-        let title = merged.split(separator: "\n").first.map(String.init) ?? "Live Jam Moment"
-        let clip = GhostClip(
-            sessionId: UUID(),
-            creatorId: UUID(),
-            videoURL: URL(string: "https://ghostwriter.app/livejam/\(UUID().uuidString).mp4")!,
-            duration: 30,
-            title: String(title.trimmingCharacters(in: .whitespacesAndNewlines).prefix(60)),
-            clipDescription: "Captured from a Live Jam collaboration.",
-            personalityUsed: "The Muse"
-        )
-        return clip
+    private func simulateRemoteUpdates() async {
+        let phrases = [
+            "Interesting approach...",
+            "What if we tried a different angle?",
+            "Building on that idea, I think we could...",
+            "I see another perspective here...",
+            "This reminds me of a concept we could expand on..."
+        ]
+        for phrase in phrases {
+            guard !Task.isCancelled else { return }
+            try? await Task.sleep(for: .seconds(Double.random(in: 2...5)))
+            remoteText += (remoteText.isEmpty ? "" : " ") + phrase
+            updateCollaborationScore()
+        }
     }
 
     private func generateSharedSuggestions() async {
@@ -90,7 +71,7 @@ final class LiveJamViewModel: @unchecked Sendable {
         ]
         for content in contents {
             guard !Task.isCancelled else { return }
-            try? await Task.sleep(for: .seconds(4))
+            try? await Task.sleep(for: .seconds(Double.random(in: 3...6)))
             let suggestion = GhostSuggestion(
                 sessionId: UUID(),
                 personalityId: UUID(),

@@ -18,9 +18,7 @@ final class OnboardingService: @unchecked Sendable {
     /// Accumulated quiz answers keyed by question identifier.
     var quizAnswers: [String: String] = [:]
 
-    // Keep this key aligned with RootView's @AppStorage("onboardingComplete")
-    // so onboarding completion state is consistent app-wide.
-    private let onboardingCompleteKey = "onboardingComplete"
+    private let onboardingCompleteKey = "ghostwriter_onboarding_complete"
 
     /// Completes the given onboarding step and advances to the next.
     ///

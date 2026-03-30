@@ -3,9 +3,6 @@ import SwiftUI
 struct OnboardingView: View {
 
     @State private var viewModel = OnboardingViewModel()
-    @State private var firstSparkClip: GhostClip?
-    @State private var showFirstSparkShareSheet = false
-    @State private var showSubscriptionSheet = false
     var onComplete: (() -> Void)?
 
     var body: some View {
@@ -53,14 +50,6 @@ struct OnboardingView: View {
             }
         } message: {
             Text("You can always adjust your personality and preferences in Settings.")
-        }
-        .sheet(isPresented: $showFirstSparkShareSheet) {
-            if let firstSparkClip {
-                GhostClipShareSheet(clip: firstSparkClip)
-            }
-        }
-        .sheet(isPresented: $showSubscriptionSheet) {
-            SubscriptionView()
         }
     }
 
@@ -252,8 +241,7 @@ struct OnboardingView: View {
 
             HStack(spacing: 16) {
                 Button {
-                    firstSparkClip = buildFirstSparkClip()
-                    showFirstSparkShareSheet = firstSparkClip != nil
+                    viewModel.advanceStep()
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "square.and.arrow.up")
@@ -324,7 +312,7 @@ struct OnboardingView: View {
             .padding(.horizontal, 24)
 
             Button {
-                showSubscriptionSheet = true
+                viewModel.advanceStep()
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "gift.fill")
@@ -357,20 +345,6 @@ struct OnboardingView: View {
 
             Spacer()
         }
-    }
-
-    private func buildFirstSparkClip() -> GhostClip {
-        let text = viewModel.firstSessionText.trimmingCharacters(in: .whitespacesAndNewlines)
-        let titleSource = text.isEmpty ? "My First Spark" : text
-        return GhostClip(
-            sessionId: UUID(),
-            creatorId: UUID(),
-            videoURL: URL(string: "https://ghostwriter.app/onboarding/\(UUID().uuidString).mp4")!,
-            duration: 30,
-            title: String(titleSource.prefix(60)),
-            clipDescription: "My first GhostWriter spark.",
-            personalityUsed: viewModel.matchedPersonality?.name ?? "The Muse"
-        )
     }
 
     private func proFeatureRow(icon: String, text: String) -> some View {

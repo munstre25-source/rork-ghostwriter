@@ -1,26 +1,11 @@
 import Foundation
 import Observation
 
-enum LeaderboardScope: String, CaseIterable, Identifiable {
-    case global
-    case friends
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .global: "Global"
-        case .friends: "Friends"
-        }
-    }
-}
-
 @Observable
 final class LeaderboardViewModel {
 
     var entries: [LeaderboardEntry] = []
     var selectedCategory: LeaderboardCategory = .mostViewed
-    var selectedScope: LeaderboardScope = .global
     var isLoading: Bool = false
     var currentUserRank: Int?
     var error: Error?
@@ -36,16 +21,9 @@ final class LeaderboardViewModel {
         defer { isLoading = false }
 
         do {
-            switch selectedScope {
-            case .global:
-                try await service.loadLeaderboard(category: selectedCategory)
-                entries = service.entries
-                currentUserRank = Int.random(in: 4...25)
-            case .friends:
-                let friendEntries = try await service.loadFriendLeaderboard(category: selectedCategory)
-                entries = friendEntries.sorted { $0.score > $1.score }
-                currentUserRank = entries.first(where: { $0.username == "you_creator" })?.rank
-            }
+            try await service.loadLeaderboard(category: selectedCategory)
+            entries = service.entries
+            currentUserRank = Int.random(in: 4...25)
         } catch {
             self.error = error
         }
@@ -53,11 +31,6 @@ final class LeaderboardViewModel {
 
     func switchCategory(_ category: LeaderboardCategory) async {
         selectedCategory = category
-        await loadLeaderboard()
-    }
-
-    func switchScope(_ scope: LeaderboardScope) async {
-        selectedScope = scope
         await loadLeaderboard()
     }
 
